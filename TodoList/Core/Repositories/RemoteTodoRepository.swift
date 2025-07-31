@@ -1,12 +1,9 @@
 import Foundation
 
 protocol RemoteTodoRepositoryProtocol {
-    func fetchTodos() -> [Todo]
+    func fetchTodos()
 }
 
-final class RemoteTodoRepository: RemoteTodoRepositoryProtocol {
+final class RemoteTodoRepository {
     
-    func fetchTodos() -> [Todo] {
-        return []
-    }
 }
