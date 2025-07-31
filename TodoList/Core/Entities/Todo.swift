@@ -4,7 +4,7 @@ import Foundation
 struct Todo {
     
     /// Уникальный идентификатор задачи.
-    let id: Int
+    let id: UUID
     
     /// Заголовок задачи.
     let title: String

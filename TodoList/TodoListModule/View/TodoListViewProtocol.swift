@@ -1,5 +1,5 @@
 /// Протокол для управления отображением списка задач.
-protocol TodoListViewProtocol {
+protocol TodoListViewProtocol: AnyObject {
     
     /// Обновляет пользовательский интерфейс в соответствии с новым состоянием.
     /// - Parameter newState: Новое состояние экрана со списком задач.
