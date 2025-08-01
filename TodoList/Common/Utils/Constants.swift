@@ -6,4 +6,8 @@ enum Constants {
     static let edit = "Редактировать"
     static let share = "Поделиться"
     static let delete = "Удалить"
+    static let loadingError = "Ощибка загрузки данных"
+    static let loadingFailureMessage = "Не удалось загрузить список задач"
+    static let retry = "Повторить"
+    static let skip = "Пропустить"
 }

@@ -9,4 +9,6 @@ protocol TodoListPresenterProtocol: AnyObject {
     func editActionOnCell(at indexPath: IndexPath)
     func shareActionOnCell(at indexPath: IndexPath)
     func deleteActionOnCell(at indexPath: IndexPath)
+    func skipLoadingTapped()
+    func retryLoadingTapped()
 }

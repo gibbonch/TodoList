@@ -2,4 +2,153 @@ import UIKit
 
 final class TodoCell: UITableViewCell {
     
+    // MARK: - Internal Poperties
+    
+    var onToggleCompletion: (() -> Void)?
+    
+    // MARK: - Private Properties
+    
+    private lazy var completionButton: UIButton = {
+        let button = UIButton()
+        button.layer.cornerRadius = 12
+        button.layer.borderWidth = 1
+        button.tintColor = .yellowAsset
+        button.setImage(.tickAsset, for: .selected)
+        button.setImage(nil, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private lazy var titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.textAlignment = .left
+        label.textColor = .whiteAsset
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private lazy var taskLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 12, weight: .regular)
+        label.textAlignment = .left
+        label.numberOfLines = 2
+        label.textColor = .whiteAsset
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private lazy var dateLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 12, weight: .regular)
+        label.textAlignment = .left
+        label.numberOfLines = 2
+        label.textColor = .lightGrayAsset
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private lazy var separator: UIView = {
+        let view = UIView()
+        view.backgroundColor = .strokeAsset
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    // MARK: - Lifecycle
+    
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setupCell()
+        setupConstraints()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        separator.isHidden = false
+    }
+    
+    // MARK: - Internal Methods
+    
+    func configure(with model: TodoCellModel) {
+        let isCompleted = model.isCompleted
+        completionButton.isSelected = isCompleted
+        completionButton.layer.borderColor = isCompleted ? UIColor.yellowAsset.cgColor : UIColor.strokeAsset.cgColor
+        
+        if isCompleted {
+            let attributedString = NSMutableAttributedString(string: model.title)
+            attributedString.addAttribute(.strikethroughStyle,
+                                          value: NSUnderlineStyle.single.rawValue,
+                                          range: NSRange(location: 0, length: model.title.count))
+            attributedString.addAttribute(.foregroundColor,
+                                          value: UIColor.lightGrayAsset,
+                                          range: NSRange(location: 0, length: model.title.count))
+            titleLabel.attributedText = attributedString
+        } else {
+            titleLabel.attributedText = nil
+            titleLabel.text = model.title
+            titleLabel.textColor = .whiteAsset
+        }
+        
+        taskLabel.text = model.task
+        taskLabel.textColor = isCompleted ? .lightGrayAsset : .whiteAsset
+        dateLabel.text = model.date
+        
+        layoutIfNeeded()
+    }
+    
+    func hideSeparator() {
+        separator.isHidden = true
+    }
+    
+    // MARK: - Private Methods
+    
+    private func setupCell() {
+        backgroundColor = .clear
+        contentView.addSubview(completionButton)
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(taskLabel)
+        contentView.addSubview(dateLabel)
+        contentView.addSubview(separator)
+    }
+    
+    private func setupConstraints() {
+        NSLayoutConstraint.activate([
+            completionButton.widthAnchor.constraint(equalToConstant: 24),
+            completionButton.heightAnchor.constraint(equalToConstant: 24),
+            completionButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            completionButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            titleLabel.leadingAnchor.constraint(equalTo: completionButton.trailingAnchor, constant: 8),
+            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
+            taskLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
+            taskLabel.leadingAnchor.constraint(equalTo: completionButton.trailingAnchor, constant: 8),
+            taskLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
+            dateLabel.topAnchor.constraint(equalTo: taskLabel.bottomAnchor, constant: 6),
+            dateLabel.leadingAnchor.constraint(equalTo: completionButton.trailingAnchor, constant: 8),
+            dateLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            dateLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
+            
+            separator.heightAnchor.constraint(equalToConstant: 0.5),
+            separator.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            separator.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            separator.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+        ])
+    }
+}
+
+// MARK: - TodoCellModel
+
+struct TodoCellModel {
+    let title: String
+    let task: String
+    let date: String
+    let isCompleted: Bool
 }

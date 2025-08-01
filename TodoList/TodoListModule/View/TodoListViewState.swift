@@ -2,8 +2,8 @@
 struct TodoListViewState {
     
     /// Массив задач для отображения.
-    var todos: [Todo] = []
+    var todos: [TodoCellType] = []
     
-    /// Флаг, указывающий на процесс загрузки данных.
-    var isLoading: Bool = true
+    /// Статус экрана.
+    var status: StatusViewState = .loading
 }

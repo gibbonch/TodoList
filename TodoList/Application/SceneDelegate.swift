@@ -25,13 +25,15 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     // MARK: - Private Methods
     
     private func assemble() -> UIViewController {
-        return UINavigationController(rootViewController: TodoListViewController())
+        let assembly = TodoListsAssembly()
+        let navigationController = UINavigationController(rootViewController: assembly.assemble())
+        return navigationController
     }
     
     private func setupNavigationBar() {
         let standardAppearance = UINavigationBarAppearance()
         standardAppearance.configureWithDefaultBackground()
-        standardAppearance.backgroundEffect = .init(style: .systemMaterialDark)
+        standardAppearance.backgroundEffect = .init(style: .systemThinMaterialDark)
         
         standardAppearance.largeTitleTextAttributes = [
             .foregroundColor: UIColor.whiteAsset,

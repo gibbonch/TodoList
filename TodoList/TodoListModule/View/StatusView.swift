@@ -11,7 +11,7 @@ final class StatusView: UIView {
     private var currentState: StatusViewState = .loading
     
     private lazy var blurView: UIVisualEffectView = {
-        let effect = UIBlurEffect(style: .systemMaterialDark)
+        let effect = UIBlurEffect(style: .systemThinMaterialDark)
         let view = UIVisualEffectView(effect: effect)
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
@@ -118,10 +118,10 @@ enum StatusViewState {
     
     case loading
     case tasks(Int)
+    case loadingFailure
     
     var title: String {
         switch self {
-            
         case .loading:
             return Constants.loading
         case .tasks(let count):
@@ -129,6 +129,8 @@ enum StatusViewState {
                 return Constants.emptyTasks
             }
             return "\(count) \(taskWord(for: count))"
+        case .loadingFailure:
+            return Constants.loadingError
         }
     }
     
