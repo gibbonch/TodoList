@@ -97,13 +97,6 @@ final class TodoListViewController: UIViewController {
         searchController.searchBar.searchTextField.backgroundColor = .grayAsset
     }
     
-    // MARK: - Internal Methods
-    
-    func presentShareSheet(with items: [Any]) {
-        let vc = UIActivityViewController(activityItems: items, applicationActivities: nil)
-        present(vc, animated: true)
-    }
-    
     // MARK: - Private Methods
     
     private func setupView() {
@@ -118,6 +111,9 @@ final class TodoListViewController: UIViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
+        let backItem = UIBarButtonItem()
+        backItem.title = Constants.backward
+        navigationItem.backBarButtonItem = backItem
     }
     
     private func setupConstraints() {
@@ -140,6 +136,7 @@ final class TodoListViewController: UIViewController {
     
     private func setupGestures() {
         let tap = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
+        tap.cancelsTouchesInView = false
         view.addGestureRecognizer(tap)
     }
     
@@ -200,7 +197,6 @@ final class TodoListViewController: UIViewController {
 extension TodoListViewController: TodoListViewProtocol {
     
     func updateState(with newState: TodoListViewState) {
-        
         DispatchQueue.main.async { [weak self] in
             self?.currentState = newState
             self?.updateUI()
@@ -266,6 +262,14 @@ extension TodoListViewController: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView,
+                   didSelectRowAt indexPath: IndexPath) {
+        guard case .default(_) = currentState.todos[indexPath.row] else {
+            return
+        }
+        presenter?.cellSelected(at: indexPath)
+    }
+    
+    func tableView(_ tableView: UITableView,
                    contextMenuConfigurationForRowAt indexPath: IndexPath,
                    point: CGPoint) -> UIContextMenuConfiguration? {
         
@@ -297,11 +301,6 @@ extension TodoListViewController: UITableViewDelegate {
                 let shareAction = UIAction(title: Constants.share,
                                            image: .shareAsset) { [weak self] _ in
                     self?.presenter?.shareActionOnCell(at: indexPath)
-                    
-//                    guard case .default(let model) = self?.currentState.todos[indexPath.row] else {
-//                        return
-//                    }
-//                    self?.presentShareSheet(with: [model.task])
                 }
                 
                 let deleteAction = UIAction(title: Constants.delete,

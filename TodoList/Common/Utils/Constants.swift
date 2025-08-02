@@ -11,4 +11,5 @@ enum Constants {
     static let loadingFailureMessage = "Не удалось загрузить список задач"
     static let retry = "Повторить"
     static let skip = "Пропустить"
+    static let backward = "Назад"
 }

@@ -6,7 +6,7 @@ final class TodoListPresenter {
     
     weak var view: TodoListViewProtocol?
     var interactor: TodoListInteractorInput?
-//    var router: TodoListRouterProtocol?
+    var router: TodoListRouterProtocol?
     
     // MARK: - Private Properties
     
@@ -52,22 +52,34 @@ extension TodoListPresenter: TodoListPresenterProtocol {
         interactor?.fetchTodos(skipLoading: false)
     }
     
-    func createTodoTapped() { }
+    func createTodoTapped() {
+        router?.routeToCreateTodo()
+    }
     
     func searchTextChanged(_ text: String) {
         interactor?.fetchTodos(by: text)
     }
     
-    func cellSelected(at indexPath: IndexPath) { }
+    func cellSelected(at indexPath: IndexPath) {
+        let target = todos[indexPath.row]
+        router?.routeToDetailTodo(for: target)
+    }
     
     func statusChangedOnCell(at indexPath: IndexPath) {
         let target = todos[indexPath.row]
         interactor?.toggleCompletionOnTodo(with: target.id)
     }
     
-    func editActionOnCell(at indexPath: IndexPath) { }
+    func editActionOnCell(at indexPath: IndexPath) {
+        let target = todos[indexPath.row]
+        router?.routeToEditTodo(for: target)
+    }
     
-    func shareActionOnCell(at indexPath: IndexPath) { }
+    func shareActionOnCell(at indexPath: IndexPath) {
+        let target = todos[indexPath.row]
+        let task = target.task
+        router?.presentShareSheet(for: [task])
+    }
     
     func deleteActionOnCell(at indexPath: IndexPath) {
         let target = todos[indexPath.row]
