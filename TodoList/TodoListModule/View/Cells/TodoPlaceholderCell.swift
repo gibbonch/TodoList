@@ -50,11 +50,6 @@ final class TodoPlaceholderCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        startShimmering()
-    }
-    
     override func prepareForReuse() {
         stopShimmering()
         separator.isHidden = false
@@ -108,12 +103,6 @@ final class TodoPlaceholderCell: UITableViewCell {
             separator.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             separator.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
         ])
-    }
-    
-    private func startShimmering() {
-        titlePlaceholder.startAnimating()
-        taskPlaceholder.startAnimating()
-        datePlaceholder.startAnimating()
     }
     
     private func stopShimmering() {

@@ -25,11 +25,34 @@ final class TodoListViewController: UIViewController {
     
     private lazy var searchController: UISearchController = {
         let searchController = UISearchController()
-        searchController.searchBar.tintColor = .yellowAsset
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.hidesNavigationBarDuringPresentation = true
         searchController.automaticallyShowsCancelButton = true
+        searchController.searchBar.placeholder = Constants.search
+        searchController.searchBar.setValue(Constants.cancel, forKey: "cancelButtonText")
+        
+        searchController.searchBar.tintColor = .yellowAsset
         searchController.searchBar.searchBarStyle = .minimal
+        searchController.searchBar.delegate = self
+        
+        let searchTextField = searchController.searchBar.searchTextField
+        searchTextField.backgroundColor = .grayAsset
+        searchTextField.textColor = .whiteAsset
+        searchTextField.attributedPlaceholder = NSAttributedString(
+            string: Constants.search,
+            attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGrayAsset]
+        )
+        
+        if let leftView = searchTextField.leftView as? UIImageView {
+            leftView.image = leftView.image?.withRenderingMode(.alwaysTemplate)
+            leftView.tintColor = .lightGrayAsset
+        }
+        
+        if let clearButton = searchTextField.value(forKey: "clearButton") as? UIButton {
+            clearButton.setImage(clearButton.currentImage?.withRenderingMode(.alwaysTemplate), for: .normal)
+            clearButton.tintColor = .lightGrayAsset
+        }
+        
         return searchController
     }()
     
@@ -57,14 +80,28 @@ final class TodoListViewController: UIViewController {
     }()
     
     // MARK: - Lifecycle
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupView()
         setupNavigationBar()
         setupConstraints()
         setupGestures()
+        updateUI()
         presenter?.viewLoaded()
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        searchController.searchBar.searchTextField.textColor = .whiteAsset
+        searchController.searchBar.searchTextField.backgroundColor = .grayAsset
+    }
+    
+    // MARK: - Internal Methods
+    
+    func presentShareSheet(with items: [Any]) {
+        let vc = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        present(vc, animated: true)
     }
     
     // MARK: - Private Methods
@@ -146,9 +183,9 @@ final class TodoListViewController: UIViewController {
 extension TodoListViewController: TodoListViewProtocol {
     
     func updateState(with newState: TodoListViewState) {
-        currentState = newState
         
         DispatchQueue.main.async { [weak self] in
+            self?.currentState = newState
             self?.updateUI()
         }
     }
@@ -157,9 +194,10 @@ extension TodoListViewController: TodoListViewProtocol {
 // MARK: - UITableViewDataSource
 
 extension TodoListViewController: UITableViewDataSource {
+    
     func tableView(_ tableView: UITableView,
                    numberOfRowsInSection section: Int) -> Int {
-        currentState.todos.count
+        return currentState.todos.count
     }
     
     func tableView(_ tableView: UITableView,
@@ -188,6 +226,9 @@ extension TodoListViewController: UITableViewDataSource {
                 defaultCell.hideSeparator()
             }
             defaultCell.configure(with: model)
+            defaultCell.onToggleCompletion = { [weak presenter] in
+                presenter?.statusChangedOnCell(at: indexPath)
+            }
             return defaultCell
         }
     }
@@ -196,6 +237,7 @@ extension TodoListViewController: UITableViewDataSource {
 // MARK: - UITableViewDelegate
 
 extension TodoListViewController: UITableViewDelegate {
+    
     func tableView(_ tableView: UITableView,
                    heightForRowAt indexPath: IndexPath) -> CGFloat {
         UITableView.automaticDimension
@@ -204,5 +246,85 @@ extension TodoListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView,
                    estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
         90.0
+    }
+    
+    func tableView(_ tableView: UITableView,
+                   contextMenuConfigurationForRowAt indexPath: IndexPath,
+                   point: CGPoint) -> UIContextMenuConfiguration? {
+        
+        UIContextMenuConfiguration(
+            identifier: nil,
+            previewProvider: { [weak self] in
+                guard case .default(let model) = self?.currentState.todos[indexPath.row] else {
+                    return UIViewController()
+                }
+                
+                guard let cell = tableView.cellForRow(at: indexPath) else {
+                    return UIViewController()
+                }
+                
+                let previewVC = TodoPreviewViewController(todo: model)
+                previewVC.preferredContentSize = cell.bounds.size
+                return previewVC
+            },
+            actionProvider: { [weak self] suggestedActions in
+                guard case .default(_) = self?.currentState.todos[indexPath.row] else {
+                    return nil
+                }
+                
+                let editAction = UIAction(title: Constants.edit,
+                                          image: .editAsset) { [weak self] _ in
+                    self?.presenter?.editActionOnCell(at: indexPath)
+                }
+                
+                let shareAction = UIAction(title: Constants.share,
+                                           image: .shareAsset) { [weak self] _ in
+                    self?.presenter?.shareActionOnCell(at: indexPath)
+                    
+//                    guard case .default(let model) = self?.currentState.todos[indexPath.row] else {
+//                        return
+//                    }
+//                    self?.presentShareSheet(with: [model.task])
+                }
+                
+                let deleteAction = UIAction(title: Constants.delete,
+                                            image: .trashAsset,
+                                            attributes: .destructive) { [weak self] _ in
+                    // Необходима задержка, чтобы превью успело закрыться
+                    // Для более плавного ui
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        self?.presenter?.deleteActionOnCell(at: indexPath)
+                    }
+                }
+                
+                return UIMenu(children: [editAction, shareAction, deleteAction])
+            }
+        )
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let offsetY = scrollView.contentOffset.y
+        let contentHeight = scrollView.contentSize.height + 49
+        let visibleHeight = scrollView.frame.size.height
+        
+        let distanceToBottom = contentHeight - offsetY - visibleHeight
+        
+        let fadeThreshold: CGFloat = 5
+        let alpha = min(1, max(0, distanceToBottom / fadeThreshold))
+        
+        statusView.setBlurAlpha(alpha)
+    }
+}
+
+// MARK: - UISearchBarDelegate
+
+extension TodoListViewController: UISearchBarDelegate {
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        presenter?.searchTextChanged(searchBar.text ?? "")
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        presenter?.searchTextChanged("")
     }
 }

@@ -7,8 +7,15 @@ final class ShimmerView: UIView {
     private let gradientColorOne = UIColor.grayAsset.cgColor
     private let gradientColorTwo = UIColor.grayAsset.lighter(by: 10).cgColor
     
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        startAnimating()
+    }
+    
     func startAnimating() {
-        guard isAnimating == false else { return }
+        if isAnimating || bounds == .zero {
+            return
+        }
         
         let gradientLayer = addGradientLayer()
         let animation = addAnimation()

@@ -6,8 +6,11 @@ final class TodoListsAssembly {
         let presenter = TodoListPresenter()
         let client = NetworkClient()
         let remoteRepository = RemoteTodoRepository(client: client)
-        
-        let interactor = TodoListInteractor(remoteRepository: remoteRepository)
+        let localRepository = LocalTodoRepository()
+        let interactor = TodoListInteractor(
+            remoteRepository: remoteRepository,
+            localRepository: localRepository
+        )
 //        let router = TodoListRouter()
         
         viewController.presenter = presenter

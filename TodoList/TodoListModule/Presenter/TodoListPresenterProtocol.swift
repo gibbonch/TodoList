@@ -1,6 +1,6 @@
 import Foundation
 
-protocol TodoListPresenterProtocol: AnyObject {
+protocol TodoListPresenterProtocol: AnyObject {    
     func viewLoaded()
     func createTodoTapped()
     func searchTextChanged(_ text: String)

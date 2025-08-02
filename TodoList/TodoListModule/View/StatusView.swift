@@ -11,8 +11,9 @@ final class StatusView: UIView {
     private var currentState: StatusViewState = .loading
     
     private lazy var blurView: UIVisualEffectView = {
-        let effect = UIBlurEffect(style: .systemThinMaterialDark)
+        let effect = UIBlurEffect(style: .systemMaterialDark)
         let view = UIVisualEffectView(effect: effect)
+        view.alpha = 0
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -66,6 +67,10 @@ final class StatusView: UIView {
         updateUI()
     }
     
+    func setBlurAlpha(_ alpha: CGFloat) {
+        blurView.alpha = alpha
+    }
+    
     // MARK: - Private Methods
     
     private func setupView() {
@@ -94,7 +99,7 @@ final class StatusView: UIView {
             loadingIndicator.heightAnchor.constraint(equalToConstant: 12),
             loadingIndicator.widthAnchor.constraint(equalToConstant: 12),
             loadingIndicator.trailingAnchor.constraint(equalTo: statusLabel.leadingAnchor, constant: -5),
-            loadingIndicator.centerYAnchor.constraint(equalTo: addButton.centerYAnchor)
+            loadingIndicator.centerYAnchor.constraint(equalTo: addButton.centerYAnchor),
         ])
     }
     

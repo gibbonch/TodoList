@@ -6,10 +6,15 @@ final class TodoCell: UITableViewCell {
     
     var onToggleCompletion: (() -> Void)?
     
+    var preview: TodoView {
+        todoView
+    }
+    
     // MARK: - Private Properties
     
     private lazy var completionButton: UIButton = {
         let button = UIButton()
+        button.addTarget(self, action: #selector(completionButtonTapped), for: .touchUpInside)
         button.layer.cornerRadius = 12
         button.layer.borderWidth = 1
         button.tintColor = .yellowAsset
@@ -19,33 +24,10 @@ final class TodoCell: UITableViewCell {
         return button
     }()
     
-    private lazy var titleLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 16, weight: .medium)
-        label.textAlignment = .left
-        label.textColor = .whiteAsset
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    private lazy var taskLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 12, weight: .regular)
-        label.textAlignment = .left
-        label.numberOfLines = 2
-        label.textColor = .whiteAsset
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    private lazy var dateLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 12, weight: .regular)
-        label.textAlignment = .left
-        label.numberOfLines = 2
-        label.textColor = .lightGrayAsset
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
+    private lazy var todoView: TodoView = {
+        let view = TodoView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
     }()
     
     private lazy var separator: UIView = {
@@ -79,24 +61,7 @@ final class TodoCell: UITableViewCell {
         completionButton.isSelected = isCompleted
         completionButton.layer.borderColor = isCompleted ? UIColor.yellowAsset.cgColor : UIColor.strokeAsset.cgColor
         
-        if isCompleted {
-            let attributedString = NSMutableAttributedString(string: model.title)
-            attributedString.addAttribute(.strikethroughStyle,
-                                          value: NSUnderlineStyle.single.rawValue,
-                                          range: NSRange(location: 0, length: model.title.count))
-            attributedString.addAttribute(.foregroundColor,
-                                          value: UIColor.lightGrayAsset,
-                                          range: NSRange(location: 0, length: model.title.count))
-            titleLabel.attributedText = attributedString
-        } else {
-            titleLabel.attributedText = nil
-            titleLabel.text = model.title
-            titleLabel.textColor = .whiteAsset
-        }
-        
-        taskLabel.text = model.task
-        taskLabel.textColor = isCompleted ? .lightGrayAsset : .whiteAsset
-        dateLabel.text = model.date
+        todoView.configure(todo: model)
         
         layoutIfNeeded()
     }
@@ -108,11 +73,9 @@ final class TodoCell: UITableViewCell {
     // MARK: - Private Methods
     
     private func setupCell() {
-        backgroundColor = .clear
+        backgroundColor = .blackAsset
         contentView.addSubview(completionButton)
-        contentView.addSubview(titleLabel)
-        contentView.addSubview(taskLabel)
-        contentView.addSubview(dateLabel)
+        contentView.addSubview(todoView)
         contentView.addSubview(separator)
     }
     
@@ -123,24 +86,20 @@ final class TodoCell: UITableViewCell {
             completionButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             completionButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
             
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            titleLabel.leadingAnchor.constraint(equalTo: completionButton.trailingAnchor, constant: 8),
-            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            
-            taskLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
-            taskLabel.leadingAnchor.constraint(equalTo: completionButton.trailingAnchor, constant: 8),
-            taskLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            
-            dateLabel.topAnchor.constraint(equalTo: taskLabel.bottomAnchor, constant: 6),
-            dateLabel.leadingAnchor.constraint(equalTo: completionButton.trailingAnchor, constant: 8),
-            dateLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            dateLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
+            todoView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            todoView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
+            todoView.leadingAnchor.constraint(equalTo: completionButton.trailingAnchor, constant: 8),
+            todoView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             
             separator.heightAnchor.constraint(equalToConstant: 0.5),
             separator.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             separator.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             separator.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
         ])
+    }
+    
+    @objc private func completionButtonTapped() {
+        onToggleCompletion?()
     }
 }
 

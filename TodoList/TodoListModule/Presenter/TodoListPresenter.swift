@@ -49,9 +49,6 @@ final class TodoListPresenter {
 extension TodoListPresenter: TodoListPresenterProtocol {
     
     func viewLoaded() {
-        let initialState = createInitialState()
-        view?.updateState(with: initialState)
-        
         interactor?.fetchTodos(skipLoading: false)
     }
     
