@@ -146,6 +146,10 @@ final class TodoListViewController: UIViewController {
     private func updateUI() {
         tableView.reloadData()
         
+        DispatchQueue.main.async { [weak self] in
+            self?.updateBlurEffect()
+        }
+        
         switch currentState.status {
         case .loading:
             statusView.isUserInteractionEnabled = false
@@ -166,6 +170,19 @@ final class TodoListViewController: UIViewController {
             statusView.updateState(with: .loadingFailure)
             searchController.searchBar.isUserInteractionEnabled = false
         }
+    }
+    
+    private func updateBlurEffect() {
+        let offsetY = tableView.contentOffset.y
+        let contentHeight = tableView.contentSize.height + 49
+        let visibleHeight = tableView.frame.size.height
+        
+        let distanceToBottom = contentHeight - offsetY - visibleHeight
+        
+        let fadeThreshold: CGFloat = 5
+        let alpha = min(1, max(0, distanceToBottom / fadeThreshold))
+        
+        statusView.setBlurAlpha(alpha)
     }
     
     @objc private func hideKeyboard() {
@@ -303,16 +320,7 @@ extension TodoListViewController: UITableViewDelegate {
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let offsetY = scrollView.contentOffset.y
-        let contentHeight = scrollView.contentSize.height + 49
-        let visibleHeight = scrollView.frame.size.height
-        
-        let distanceToBottom = contentHeight - offsetY - visibleHeight
-        
-        let fadeThreshold: CGFloat = 5
-        let alpha = min(1, max(0, distanceToBottom / fadeThreshold))
-        
-        statusView.setBlurAlpha(alpha)
+        updateBlurEffect()
     }
 }
 
