@@ -11,6 +11,7 @@ final class TodoListInteractor {
     private let remoteRepository: RemoteTodoRepositoryProtocol
     private let localRepository: LocalTodoRepositoryProtocol
     private let defaults: UserDefaults
+    
     private let key = "initialized"
     private var lastQuery = ""
     

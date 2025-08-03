@@ -6,7 +6,7 @@ final class TodoListRouter: TodoListRouterProtocol {
     
     weak var rootViewController: UIViewController?
     
-    // MARK: - Internal Properties
+    // MARK: - Internal Methods
     
     func routeToCreateTodo() {
         let vc = TodoEditorViewController()
@@ -19,7 +19,7 @@ final class TodoListRouter: TodoListRouterProtocol {
     }
     
     func routeToDetailTodo(for todo: Todo) {
-        let vc = TodoDetailViewController()
+        let vc = TodoDetailAssembly().assemble(with: todo)
         rootViewController?.navigationController?.pushViewController(vc, animated: true)
     }
     

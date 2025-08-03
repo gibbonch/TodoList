@@ -18,3 +18,11 @@ struct Todo {
     /// Дата создания задачи.
     let date: Date
 }
+
+struct TodoBuilder {
+    private var id: UUID = UUID()
+    var title: String = ""
+    var task: String = ""
+    var isCompleted: Bool = false
+    var date: Date = Date()
+}
