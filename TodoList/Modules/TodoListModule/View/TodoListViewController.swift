@@ -12,7 +12,6 @@ final class TodoListViewController: UIViewController {
     
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
-        tableView.dataSource = self
         tableView.delegate = self
         tableView.register(TodoCell.self, forCellReuseIdentifier: TodoCell.reuseIdentifier)
         tableView.register(TodoPlaceholderCell.self, forCellReuseIdentifier: TodoPlaceholderCell.reuseIdentifier)
@@ -21,6 +20,36 @@ final class TodoListViewController: UIViewController {
         tableView.contentInset = .init(top: 0, left: 0, bottom: 49, right: 0)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         return tableView
+    }()
+    
+    private lazy var dataSource: DataSource = {
+        let datasource = DataSource(tableView: tableView) { [weak self] tableView, indexPath, cellType in
+            guard let self else { return UITableViewCell() }
+            
+            switch cellType {
+            case .placeholder:
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: TodoPlaceholderCell.reuseIdentifier),
+                      let placeholderCell = cell as? TodoPlaceholderCell else {
+                    return UITableViewCell()
+                }
+                placeholderCell.selectionStyle = .none
+                return placeholderCell
+                
+            case .default(let model):
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: TodoCell.reuseIdentifier),
+                      let defaultCell = cell as? TodoCell else {
+                    return UITableViewCell()
+                }
+                defaultCell.selectionStyle = .none
+                defaultCell.configure(with: model)
+                defaultCell.onToggleCompletion = { [weak presenter] in
+                    presenter?.statusChangedOnCell(at: indexPath)
+                }
+                return defaultCell
+            }
+        }
+        datasource.defaultRowAnimation = .automatic
+        return datasource
     }()
     
     private lazy var searchController: UISearchController = {
@@ -87,7 +116,7 @@ final class TodoListViewController: UIViewController {
         setupNavigationBar()
         setupConstraints()
         setupGestures()
-        updateUI()
+        applySnapshot(animated: false)
         presenter?.viewLoaded()
     }
     
@@ -141,8 +170,6 @@ final class TodoListViewController: UIViewController {
     }
     
     private func updateUI() {
-        tableView.reloadData()
-        
         DispatchQueue.main.async { [weak self] in
             self?.updateBlurEffect()
         }
@@ -167,6 +194,13 @@ final class TodoListViewController: UIViewController {
             statusView.updateState(with: .loadingFailure)
             searchController.searchBar.isUserInteractionEnabled = false
         }
+    }
+    
+    private func applySnapshot(animated: Bool) {
+        var snapshot = Snapshot()
+        snapshot.appendSections([.main])
+        snapshot.appendItems(currentState.todos)
+        dataSource.apply(snapshot, animatingDifferences: animated)
     }
     
     private func updateBlurEffect() {
@@ -198,51 +232,10 @@ extension TodoListViewController: TodoListViewProtocol {
     
     func updateState(with newState: TodoListViewState) {
         DispatchQueue.main.async { [weak self] in
+            let statusChanged = self?.currentState.status != newState.status
             self?.currentState = newState
+            self?.applySnapshot(animated: !statusChanged)
             self?.updateUI()
-        }
-    }
-}
-
-// MARK: - UITableViewDataSource
-
-extension TodoListViewController: UITableViewDataSource {
-    
-    func tableView(_ tableView: UITableView,
-                   numberOfRowsInSection section: Int) -> Int {
-        return currentState.todos.count
-    }
-    
-    func tableView(_ tableView: UITableView,
-                   cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cellType = currentState.todos[indexPath.row]
-        
-        switch cellType {
-        case .placeholder:
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: TodoPlaceholderCell.reuseIdentifier),
-                  let placeholderCell = cell as? TodoPlaceholderCell else {
-                return UITableViewCell()
-            }
-            placeholderCell.selectionStyle = .none
-            if indexPath.row == currentState.todos.count - 1 {
-                placeholderCell.hideSeparator()
-            }
-            return placeholderCell
-            
-        case .default(let model):
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: TodoCell.reuseIdentifier),
-                  let defaultCell = cell as? TodoCell else {
-                return UITableViewCell()
-            }
-            defaultCell.selectionStyle = .none
-            if indexPath.row == currentState.todos.count - 1 {
-                defaultCell.hideSeparator()
-            }
-            defaultCell.configure(with: model)
-            defaultCell.onToggleCompletion = { [weak presenter] in
-                presenter?.statusChangedOnCell(at: indexPath)
-            }
-            return defaultCell
         }
     }
 }
@@ -258,7 +251,7 @@ extension TodoListViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView,
                    estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        90.0
+        84.0
     }
     
     func tableView(_ tableView: UITableView,
@@ -307,8 +300,8 @@ extension TodoListViewController: UITableViewDelegate {
                                             image: .trashAsset,
                                             attributes: .destructive) { [weak self] _ in
                     // Необходима задержка, чтобы превью успело закрыться
-                    // Для более плавного ui
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    // Без этого баг анимации
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
                         self?.presenter?.deleteActionOnCell(at: indexPath)
                     }
                 }
@@ -336,4 +329,14 @@ extension TodoListViewController: UISearchBarDelegate {
     }
 }
 
+// MARK: - Section
+
+fileprivate enum Section {
+    case main
+}
+
 // MARK: - Type Alises
+
+fileprivate typealias DataSource = UITableViewDiffableDataSource<Section, TodoCellType>
+fileprivate typealias Snapshot = NSDiffableDataSourceSnapshot<Section, TodoCellType>
+

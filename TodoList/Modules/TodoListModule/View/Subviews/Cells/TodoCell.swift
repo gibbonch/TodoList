@@ -62,8 +62,6 @@ final class TodoCell: UITableViewCell {
         completionButton.layer.borderColor = isCompleted ? UIColor.yellowAsset.cgColor : UIColor.strokeAsset.cgColor
         
         todoView.configure(todo: model)
-        
-        layoutIfNeeded()
     }
     
     func hideSeparator() {
@@ -99,6 +97,8 @@ final class TodoCell: UITableViewCell {
     }
     
     @objc private func completionButtonTapped() {
+        completionButton.isSelected.toggle()
+        completionButton.layer.borderColor = completionButton.isSelected ? UIColor.yellowAsset.cgColor : UIColor.strokeAsset.cgColor
         onToggleCompletion?()
     }
 }
@@ -106,8 +106,21 @@ final class TodoCell: UITableViewCell {
 // MARK: - TodoCellModel
 
 struct TodoCellModel {
+    let id: UUID
     let title: String
     let task: String
     let date: String
     let isCompleted: Bool
+}
+
+extension TodoCellModel: Hashable {
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.id == rhs.id && lhs.title == rhs.title && lhs.task == rhs.task
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(title)
+        hasher.combine(task)
+    }
 }

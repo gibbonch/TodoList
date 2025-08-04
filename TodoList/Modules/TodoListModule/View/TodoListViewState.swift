@@ -2,7 +2,7 @@
 struct TodoListViewState {
     
     /// Массив задач для отображения.
-    var todos: [TodoCellType] = Array(repeating: .placeholder, count: 3)
+    var todos: [TodoCellType] = [.placeholder(), .placeholder(), .placeholder()]
     
     /// Статус экрана.
     var status: StatusViewState = .loading

@@ -82,14 +82,7 @@ extension TodoListInteractor: TodoListInteractorInput {
     }
     
     func deleteTodo(with id: UUID) {
-        localRepository.deleteTodo(withId: id) { [weak self] result in
-            switch result {
-            case .success():
-                self?.fetchTodosFromLocalRepository()
-            case .failure(_):
-                self?.output?.handleFailure(.editingFailure)
-            }
-        }
+        localRepository.deleteTodo(withId: id, completion: nil)
     }
     
     func toggleCompletionOnTodo(with id: UUID) {

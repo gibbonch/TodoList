@@ -8,7 +8,7 @@ protocol LocalTodoRepositoryProtocol {
     func fetchTodos(query: String)
     func saveTodo(_ todo: Todo, completion: ((Result<Void, Error>) -> Void)?)
     func saveTodos(_ todos: [Todo], completion: @escaping (Result<Void, Error>) -> Void)
-    func deleteTodo(withId id: UUID, completion: @escaping (Result<Void, Error>) -> Void)
+    func deleteTodo(withId id: UUID, completion: ((Result<Void, Error>) -> Void)?)
     func toggleTodoCompletion(withId id: UUID, completion: @escaping (Result<Void, Error>) -> Void)
     func updateTodo(with updatedTodo: Todo, completion: ((Result<Void, Error>) -> Void)?)
 }
@@ -167,7 +167,7 @@ final class LocalTodoRepository: NSObject, LocalTodoRepositoryProtocol {
         }
     }
     
-    func deleteTodo(withId id: UUID, completion: @escaping (Result<Void, Error>) -> Void) {
+    func deleteTodo(withId id: UUID, completion: ((Result<Void, Error>) -> Void)?) {
         contextProvider.performBackgroundTask { context in
             do {
                 let request: NSFetchRequest<TodoEntity> = TodoEntity.fetchRequest()
@@ -177,16 +177,16 @@ final class LocalTodoRepository: NSObject, LocalTodoRepositoryProtocol {
                 let todoEntities = try context.fetch(request)
                 
                 guard let todoEntity = todoEntities.first else {
-                    completion(.failure(TodoRepositoryError.todoNotFound))
+                    completion?(.failure(TodoRepositoryError.todoNotFound))
                     return
                 }
                 
                 context.delete(todoEntity)
                 try context.save()
                 
-                completion(.success(()))
+                completion?(.success(()))
             } catch {
-                completion(.failure(error))
+                completion?(.failure(error))
             }
         }
     }

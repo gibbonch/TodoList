@@ -157,3 +157,19 @@ enum StatusViewState {
         }
     }
 }
+
+extension StatusViewState: Equatable {
+    
+    static func == (lhs: StatusViewState, rhs: StatusViewState) -> Bool {
+        switch (lhs, rhs) {
+        case (.loading, .loading):
+            return true
+        case (.loadingFailure, .loadingFailure):
+            return true
+        case (.tasks(_), .tasks(_)):
+            return true
+        default:
+            return false
+        }
+    }
+}

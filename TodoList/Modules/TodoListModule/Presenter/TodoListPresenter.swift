@@ -24,7 +24,7 @@ final class TodoListPresenter {
     
     private func createInitialState() -> TodoListViewState {
         TodoListViewState(
-            todos: Array(repeating: .placeholder, count: 3),
+            todos: [.placeholder(), .placeholder(), .placeholder()],
             status: .loading
         )
     }
@@ -33,6 +33,7 @@ final class TodoListPresenter {
         let cells = todos.map { todo in
             let date = dateFormatter.string(from: todo.date)
             let model = TodoCellModel(
+                id: todo.id,
                 title: todo.title,
                 task: todo.task,
                 date: date,
