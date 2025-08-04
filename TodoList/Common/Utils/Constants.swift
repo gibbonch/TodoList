@@ -12,4 +12,8 @@ enum Constants {
     static let retry = "Повторить"
     static let skip = "Пропустить"
     static let backward = "Назад"
+    static let titlePlaceholder = "Название"
+    static let taskPlaceholder = "Задача"
+    static let save = "Сохранить"
+    static let newTask = "Новая задача"
 }

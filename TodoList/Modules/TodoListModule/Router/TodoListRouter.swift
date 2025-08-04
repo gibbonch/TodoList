@@ -9,12 +9,12 @@ final class TodoListRouter: TodoListRouterProtocol {
     // MARK: - Internal Methods
     
     func routeToCreateTodo() {
-        let vc = TodoEditorViewController()
+        let vc = TodoEditorAssembly().assembleCreateScene()
         rootViewController?.present(vc, animated: true)
     }
     
     func routeToEditTodo(for todo: Todo) {
-        let vc = TodoEditorViewController()
+        let vc = TodoEditorAssembly().assembleEditScene(with: todo)
         rootViewController?.present(vc, animated: true)
     }
     
