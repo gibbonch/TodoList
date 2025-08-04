@@ -23,7 +23,6 @@ final class TodoEditorInteractor: TodoEditorInteractorInput {
         self.caretaker = caretaker
         self.originator = originator
         subscribeOnHistoryStatus()
-        subscribeOnValidationStatus()
         caretaker.backup()
     }
     
@@ -41,12 +40,14 @@ final class TodoEditorInteractor: TodoEditorInteractorInput {
     
     func saveTask() {
         guard let todo = originator.build() else { return }
-        localRepository.saveTodo(todo) { [weak self] result in
+        
+        localRepository.fetchTodo(by: todo.id) { [weak self] result in
+            guard let self else { return }
             switch result {
-            case .success():
-                self?.output?.todoSaved()
+            case .success(_):
+                self.localRepository.updateTodo(with: todo, completion: nil)
             case .failure(_):
-                break
+                localRepository.saveTodo(todo, completion: nil)
             }
         }
     }
@@ -66,12 +67,6 @@ final class TodoEditorInteractor: TodoEditorInteractorInput {
     private func subscribeOnHistoryStatus() {
         caretaker.$status.sink { [weak self] status in
             self?.output?.historyStatusChanged(status)
-        }.store(in: &cancellables)
-    }
-    
-    private func subscribeOnValidationStatus() {
-        originator.$isValid.sink { [weak self] isValid in
-            self?.output?.validationStatusChanged(isValid)
         }.store(in: &cancellables)
     }
 }

@@ -1,6 +1,6 @@
 struct HistoryStatus {
     
-    var isEmpty: Bool
-    var hasNext: Bool
-    var hasPrevious: Bool
+    var isEmpty: Bool = true
+    var hasNext: Bool = false
+    var hasPrevious: Bool = false
 }

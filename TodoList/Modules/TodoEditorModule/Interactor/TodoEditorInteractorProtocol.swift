@@ -9,8 +9,6 @@ protocol TodoEditorInteractorInput: AnyObject {
 
 protocol TodoEditorInteractorOutput: AnyObject {
     
-    func validationStatusChanged(_ isValid: Bool)
     func todoChanged(title: String, task: String)
-    func todoSaved()
     func historyStatusChanged(_ status: HistoryStatus)
 }

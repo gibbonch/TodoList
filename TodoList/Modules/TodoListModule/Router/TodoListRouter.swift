@@ -10,12 +10,12 @@ final class TodoListRouter: TodoListRouterProtocol {
     
     func routeToCreateTodo() {
         let vc = TodoEditorAssembly().assembleCreateScene()
-        rootViewController?.present(vc, animated: true)
+        rootViewController?.navigationController?.pushViewController(vc, animated: true)
     }
     
     func routeToEditTodo(for todo: Todo) {
         let vc = TodoEditorAssembly().assembleEditScene(with: todo)
-        rootViewController?.present(vc, animated: true)
+        rootViewController?.navigationController?.pushViewController(vc, animated: true)
     }
     
     func routeToDetailTodo(for todo: Todo) {

@@ -7,29 +7,25 @@ final class TodoOriginator {
     
     var title: String {
         get { memento.title }
-        set {
-            memento.title = newValue
-            validate()
-        }
+        set { memento.title = newValue }
     }
     
     var task: String {
         get { memento.task }
-        set {
-            memento.task = newValue
-            validate()
-        }
+        set { memento.task = newValue }
+    }
+    
+    var isValid: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !task.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
     private(set) var memento: TodoMemento
-    
-    @Published var isValid: Bool
     
     // MARK: - Private Properties
     
     private var id: UUID
     private var isCompleted: Bool?
-    private var date: Date?
     
     // MARK: - Lifecycle
     
@@ -37,16 +33,12 @@ final class TodoOriginator {
         memento = TodoMemento(title: "", task: "")
         id = UUID()
         isCompleted = nil
-        date = nil
-        isValid = false
     }
     
     init(todo: Todo) {
         memento = TodoMemento(title: todo.title, task: todo.task)
         id = todo.id
         isCompleted = todo.isCompleted
-        date = todo.date
-        isValid = true
     }
     
     // MARK: - Internal Methods
@@ -64,14 +56,7 @@ final class TodoOriginator {
             title: memento.title.trimmingCharacters(in: .whitespacesAndNewlines),
             task: memento.task.trimmingCharacters(in: .whitespacesAndNewlines),
             isCompleted: isCompleted ?? false,
-            date: date ?? Date()
+            date: Date()
         )
-    }
-    
-    // MARK: - Private Methods
-    
-    private func validate() {
-        isValid = !memento.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !memento.task.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }

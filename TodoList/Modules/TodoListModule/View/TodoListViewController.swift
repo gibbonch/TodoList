@@ -335,3 +335,5 @@ extension TodoListViewController: UISearchBarDelegate {
         presenter?.searchTextChanged("")
     }
 }
+
+// MARK: - Type Alises

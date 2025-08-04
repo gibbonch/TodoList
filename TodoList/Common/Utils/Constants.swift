@@ -20,4 +20,5 @@ enum Constants {
     static let alertMessage = "Введенные данные будут утеряны"
     static let alertDismiss = "Все равно закрыть"
     static let alertCancel = "Отмена"
+    static let done = "Готово"
 }

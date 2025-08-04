@@ -22,13 +22,19 @@ final class TodoEditorPresenter {
         title = Constants.newTask
         initialTitle = ""
         initialTask = ""
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM/yy"
+        currentState.date = formatter.string(from: Date())
     }
     
     init(todo: Todo) {
         currentState = TodoEditorViewState()
         currentState.title = todo.title
         currentState.task = todo.task
-        currentState.isValid = true
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM/yy"
+        currentState.date = formatter.string(from: todo.date)
         title = Constants.edit
         initialTitle = todo.title
         initialTask = todo.task
@@ -40,8 +46,11 @@ final class TodoEditorPresenter {
 extension TodoEditorPresenter: TodoEditorPresenterProtocol {
     
     func viewLoaded() {
-        view?.setTitle(title)
         view?.updateState(with: currentState)
+    }
+    
+    func viewWillDisappear() {
+        interactor?.saveTask()
     }
     
     func titleChanged(_ title: String) {
@@ -65,20 +74,11 @@ extension TodoEditorPresenter: TodoEditorPresenterProtocol {
     func nextTapped() {
         interactor?.moveToNextSnapshot()
     }
-    
-    func allowsDismissing() -> Bool {
-        initialTitle == currentState.title && initialTask == currentState.task
-    }
 }
 
 // MARK: - TodoEditorInteractorOutput
 
 extension TodoEditorPresenter: TodoEditorInteractorOutput {
-    
-    func validationStatusChanged(_ isValid: Bool) {
-        currentState.isValid = isValid
-        view?.updateState(with: currentState)
-    }
     
     func todoChanged(title: String, task: String) {
         currentState.title = title
@@ -87,15 +87,7 @@ extension TodoEditorPresenter: TodoEditorInteractorOutput {
     }
     
     func historyStatusChanged(_ status: HistoryStatus) {
-        let headerViewState = HeaderViewState(
-            isHistoryVisible: !status.isEmpty,
-            hasPreviousState: status.hasPrevious,
-            hasNextState: status.hasNext
-        )
-        currentState.headerViewState = headerViewState
-        
+        currentState.historyStatus = status
         view?.updateState(with: currentState)
     }
-    
-    func todoSaved() { view?.dismiss() }
 }

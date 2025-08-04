@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 final class TodoListInteractor {
     
@@ -15,6 +16,8 @@ final class TodoListInteractor {
     private let key = "initialized"
     private var lastQuery = ""
     
+    private var cancellables: Set<AnyCancellable> = []
+    
     // MARK: - Lifecycle
     
     init(remoteRepository: RemoteTodoRepositoryProtocol,
@@ -23,17 +26,19 @@ final class TodoListInteractor {
         self.remoteRepository = remoteRepository
         self.localRepository = localRepository
         self.defaults = defaults
+        
+        subscribeToLocalRepository()
     }
     
     private func fetchTodosFromLocalRepository() {
-        localRepository.fetchTodos(query: lastQuery) { [weak self] result in
-            switch result {
-            case .success(let todos):
+        localRepository.fetchTodos(query: lastQuery)
+    }
+    
+    private func subscribeToLocalRepository() {
+        localRepository.fetchedResults
+            .sink { [weak self] todos in
                 self?.output?.updateTodos(todos)
-            case .failure(_):
-                self?.output?.handleFailure(.fetchingFailure)
-            }
-        }
+            }.store(in: &cancellables)
     }
 }
 
@@ -73,14 +78,7 @@ extension TodoListInteractor: TodoListInteractorInput {
     
     func fetchTodos(by query: String) {
         lastQuery = query
-        localRepository.fetchTodos(query: query) { [weak self] result in
-            switch result {
-            case .success(let todos):
-                self?.output?.updateTodos(todos)
-            case .failure(_):
-                self?.output?.handleFailure(.fetchingFailure)
-            }
-        }
+        localRepository.fetchTodos(query: query)
     }
     
     func deleteTodo(with id: UUID) {
