@@ -61,8 +61,8 @@ final class TodoOriginator {
         
         return Todo(
             id: id,
-            title: memento.title,
-            task: memento.task,
+            title: memento.title.trimmingCharacters(in: .whitespacesAndNewlines),
+            task: memento.task.trimmingCharacters(in: .whitespacesAndNewlines),
             isCompleted: isCompleted ?? false,
             date: date ?? Date()
         )
@@ -71,6 +71,7 @@ final class TodoOriginator {
     // MARK: - Private Methods
     
     private func validate() {
-        isValid = !memento.title.isEmpty && !memento.task.isEmpty
+        isValid = !memento.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !memento.task.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }

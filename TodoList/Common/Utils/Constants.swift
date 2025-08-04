@@ -16,4 +16,8 @@ enum Constants {
     static let taskPlaceholder = "Задача"
     static let save = "Сохранить"
     static let newTask = "Новая задача"
+    static let alertTitle = "Изменения не сохранены"
+    static let alertMessage = "Введенные данные будут утеряны"
+    static let alertDismiss = "Все равно закрыть"
+    static let alertCancel = "Отмена"
 }

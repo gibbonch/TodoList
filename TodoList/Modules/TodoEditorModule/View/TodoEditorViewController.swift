@@ -1,4 +1,5 @@
 import UIKit
+import Combine
 
 final class TodoEditorViewController: UIViewController {
     
@@ -8,7 +9,9 @@ final class TodoEditorViewController: UIViewController {
     
     // MARK: - Private Properties
     
-    private var allowsDismissing = true
+    private let titleSubject: PassthroughSubject<String, Never> = .init()
+    private let taskSubject: PassthroughSubject<String, Never> = .init()
+    private var cancellables: Set<AnyCancellable> = []
     
     private lazy var contentView: UIView = {
         let view = UIView()
@@ -99,7 +102,7 @@ final class TodoEditorViewController: UIViewController {
         button.setTitleColor(.yellowAsset, for: .normal)
         button.layer.cornerRadius = 12
         button.layer.shadowColor = UIColor.blackAsset.cgColor
-        button.layer.shadowOffset = CGSize(width: 0, height: -5)
+        button.layer.shadowOffset = CGSize(width: 0, height: -3)
         button.layer.shadowOpacity = 1
         button.layer.shadowRadius = 3
         button.layer.masksToBounds = false
@@ -119,6 +122,7 @@ final class TodoEditorViewController: UIViewController {
         setupConstraints()
         setupGestures()
         setupKeyboardObservers()
+        setupBindings()
         presentationController?.delegate = self
         presenter?.viewLoaded()
     }
@@ -199,6 +203,21 @@ final class TodoEditorViewController: UIViewController {
         )
     }
     
+    private func setupBindings() {
+        titleSubject
+            .debounce(for: 0.1, scheduler: DispatchQueue.main)
+            .sink { [weak presenter] title in
+                presenter?.titleChanged(title)
+            }
+            .store(in: &cancellables)
+        
+        taskSubject
+            .debounce(for: 0.1, scheduler: DispatchQueue.main)
+            .sink { [weak presenter] task in
+                presenter?.taskChanged(task)
+            }
+            .store(in: &cancellables)
+    }
     
     private func updateBlurEffect() {
         let offsetY = scrollView.contentOffset.y + 44
@@ -207,6 +226,22 @@ final class TodoEditorViewController: UIViewController {
         let alpha = min(1, max(0, offsetY / fadeThreshold))
         
         headerView.setBlurAlpha(alpha)
+    }
+    
+    private func presentWarningAlert() {
+        let alert = UIAlertController(
+            title: Constants.alertTitle,
+            message: Constants.alertMessage,
+            preferredStyle: .alert
+        )
+        let dismissAction = UIAlertAction(title: Constants.alertDismiss, style: .destructive) { [weak self] _ in
+            self?.dismiss(animated: true)
+        }
+        let cancelAction = UIAlertAction(title: Constants.alertCancel, style: .cancel)
+        alert.addAction(dismissAction)
+        alert.addAction(cancelAction)
+        present(alert, animated: true)
+        
     }
     
     @objc private func hideKeyboard() {
@@ -279,16 +314,18 @@ extension TodoEditorViewController: TodoEditorViewProtocol {
 
 extension TodoEditorViewController: UITextFieldDelegate {
     
-    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+    func textField(_ textField: UITextField,
+                   shouldChangeCharactersIn range: NSRange,
+                   replacementString string: String) -> Bool {
         let currentText = textField.text ?? ""
         guard let stringRange = Range(range, in: currentText) else { return false }
         let updatedText = currentText.replacingCharacters(in: stringRange, with: string)
-        presenter?.titleChanged(updatedText)
+        titleSubject.send(updatedText)
         return true
     }
     
     func textFieldShouldClear(_ textField: UITextField) -> Bool {
-        presenter?.titleChanged("")
+        titleSubject.send("")
         return true
     }
 }
@@ -299,24 +336,39 @@ extension TodoEditorViewController: UITextViewDelegate {
     
     func textViewDidChange(_ textView: UITextView) {
         taskPlaceholderLabel.isHidden = !textView.text.isEmpty
-        presenter?.taskChanged(textView.text ?? "")
+        taskSubject.send(textView.text ?? "")
         
-        DispatchQueue.main.async {
-            self.scrollToCursor()
-        }
+        scrollToCursor()
     }
     
-    func textViewDidChangeSelection(_ textView: UITextView) {
-        if textView.isFirstResponder {
-            scrollToCursor()
+    func textView(_ textView: UITextView,
+                  shouldChangeTextIn range: NSRange,
+                  replacementText text: String) -> Bool {
+        if text == "\n" {
+            let currentCursorPosition = range.location
+            
+            let currentText = textView.text ?? ""
+            let newText = (currentText as NSString).replacingCharacters(in: range, with: "\n")
+            textView.text = newText
+            
+            let newCursorPosition = currentCursorPosition + 1
+            if let newPosition = textView.position(from: textView.beginningOfDocument, offset: newCursorPosition) {
+                textView.selectedTextRange = textView.textRange(from: newPosition, to: newPosition)
+            }
+            
+            taskPlaceholderLabel.isHidden = true
+            taskSubject.send(newText)
+            
+            return false
         }
+        
+        return true
     }
     
     private func scrollToCursor() {
         guard taskTextView.isFirstResponder else { return }
         
         taskTextView.layoutIfNeeded()
-        view.layoutIfNeeded()
         
         guard let selectedRange = taskTextView.selectedTextRange else { return }
         let caretRect = taskTextView.caretRect(for: selectedRange.start)
@@ -366,6 +418,12 @@ extension TodoEditorViewController: UIScrollViewDelegate {
 extension TodoEditorViewController: UIAdaptivePresentationControllerDelegate {
     
     func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool {
-        presenter?.allowsDismissing() ?? true
+        let allows = presenter?.allowsDismissing() ?? true
+        if !allows {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.presentWarningAlert()
+            }
+        }
+        return allows
     }
 }
