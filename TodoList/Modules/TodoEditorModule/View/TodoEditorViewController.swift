@@ -67,6 +67,8 @@ final class TodoEditorViewController: UIViewController {
         return textView
     }()
     
+    private var taskTextViewHeightConstraint: NSLayoutConstraint?
+    
     private lazy var taskPlaceholderLabel: UILabel = {
         let label = UILabel()
         label.text = Constants.taskPlaceholder
@@ -128,6 +130,17 @@ final class TodoEditorViewController: UIViewController {
         presenter?.viewWillDisappear()
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        let bottomPadding: CGFloat = 20 + view.safeAreaInsets.bottom
+        let topPadding: CGFloat = 8 + view.safeAreaInsets.top
+        
+        let availableHeight = view.bounds.height - topPadding - titleTextField.frame.height - 8 - dateLabel.frame.height - 16 - bottomPadding
+        taskTextViewHeightConstraint?.constant = max(availableHeight, 100)
+    }
+
+    
     // MARK: - Private Methods
     
     private func setupView() {
@@ -146,6 +159,9 @@ final class TodoEditorViewController: UIViewController {
     }
     
     private func setupConstraints() {
+        taskTextViewHeightConstraint = taskTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100)
+        taskTextViewHeightConstraint?.isActive = true
+        
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -169,11 +185,12 @@ final class TodoEditorViewController: UIViewController {
             taskTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             taskTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             taskTextView.topAnchor.constraint(equalTo: dateLabel.bottomAnchor, constant: 16),
+            taskTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 800),
             taskTextView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
             
             taskPlaceholderLabel.leadingAnchor.constraint(equalTo: taskTextView.leadingAnchor, constant: 1),
             taskPlaceholderLabel.trailingAnchor.constraint(equalTo: taskTextView.trailingAnchor, constant: -20),
-            taskPlaceholderLabel.centerYAnchor.constraint(equalTo: taskTextView.centerYAnchor),
+            taskPlaceholderLabel.topAnchor.constraint(equalTo: taskTextView.topAnchor),
         ])
     }
     

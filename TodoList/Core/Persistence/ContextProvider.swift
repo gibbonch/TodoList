@@ -1,14 +1,29 @@
 import Foundation
 import CoreData
 
+/// Протокол для работы с Core Data.
+///
+/// Предоставляет доступ к основному контексту и метод для фоновых операций.
 protocol ContextProvider {
+    
+    /// Контекст главного потока для работы с UI.
     var viewContext: NSManagedObjectContext { get }
+    
+    /// Выполняет задачу в фоновом контексте.
+    /// - Parameter block: Замыкание с фоновым контекстом.
     func performBackgroundTask(_ block: @escaping (NSManagedObjectContext) -> Void)
 }
 
+
 final class CoreDataStack: ContextProvider {
     
+    // MARK: - Singleton
+    
     static let shared = CoreDataStack()
+    
+    private init() { }
+    
+    // MARK: - Internal Properties
     
     lazy var persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "TodoListDataModel")
@@ -26,7 +41,7 @@ final class CoreDataStack: ContextProvider {
         return persistentContainer.viewContext
     }
     
-    private init() { }
+    // MARK: - Internal Methods
     
     func save(context: NSManagedObjectContext) throws {
         guard context.hasChanges else { return }

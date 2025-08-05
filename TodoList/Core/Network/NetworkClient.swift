@@ -1,24 +1,35 @@
 import Foundation
-import Network
 
+/// Протокол для сетевого клиента.
 protocol NetworkClientProtocol {
     
+    /// Загружает данные из сети и декодирует их.
+    /// - Parameters:
+    ///   - url: URL для запроса данных.
+    ///   - type: Тип для декодирования данных.
+    ///   - completion: Замыкание с результатом операции.
     func fetchData<T: Decodable>(from url: String,
                                  type: T.Type,
-                                 completion: @escaping (Result<T, any Error>) -> Void)
+                                 completion: @escaping (Result<T, NetworkError>) -> Void)
 }
 
 final class NetworkClient: NetworkClientProtocol {
     
+    // MARK: Private Properties
+    
     private let session: URLSession
+    
+    // MARK: - Lifecycle
     
     init(session: URLSession = .shared) {
         self.session = session
     }
     
+    // MARK: - Internal Properties
+    
     func fetchData<T: Decodable>(from url: String,
                                  type: T.Type,
-                                 completion: @escaping (Result<T, any Error>) -> Void) {
+                                 completion: @escaping (Result<T, NetworkError>) -> Void) {
         
         guard let url = URL(string: url) else {
             completion(.failure(NetworkError.invalidURL))

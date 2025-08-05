@@ -2,15 +2,23 @@ import UIKit
 
 final class ShimmerView: UIView {
     
+    // MARK: - Internal Properties
+    
     private(set) var isAnimating = false
+    
+    // MARK: - Private Properties
 
     private let gradientColorOne = UIColor.grayAsset.cgColor
     private let gradientColorTwo = UIColor.grayAsset.lighter(by: 10).cgColor
+    
+    // MARK: - Lifecycle
     
     override func layoutSubviews() {
         super.layoutSubviews()
         startAnimating()
     }
+    
+    // MARK: - Internal Properties
     
     func startAnimating() {
         if isAnimating || bounds == .zero {
@@ -28,6 +36,8 @@ final class ShimmerView: UIView {
         layer.sublayers?.forEach { $0.removeFromSuperlayer() }
         isAnimating = false
     }
+    
+    // MARK: - Private Properties
     
     private func addGradientLayer() -> CAGradientLayer {
         let gradientLayer = CAGradientLayer()

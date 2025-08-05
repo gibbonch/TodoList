@@ -1,6 +1,10 @@
 import Foundation
 
+/// Протокол для удалённого хранилища задач.
 protocol RemoteTodoRepositoryProtocol {
+    
+    /// Загружает список задач с удалённого сервера.
+    /// - Parameter completion: Замыкание с результатом: список задач или ошибка.
     func fetchTodos(completion: @escaping (Result<[Todo], any Error>) -> Void)
 }
 
