@@ -1,4 +1,5 @@
 import UIKit
+import Combine
 
 final class TodoListViewController: UIViewController {
     
@@ -9,6 +10,7 @@ final class TodoListViewController: UIViewController {
     // MARK: - Private Properties
     
     private var currentState = TodoListViewState()
+    private var cancellables: Set<AnyCancellable> = []
     
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
@@ -116,6 +118,7 @@ final class TodoListViewController: UIViewController {
         setupNavigationBar()
         setupConstraints()
         setupGestures()
+        subscribeOnKeyboardState()
         applySnapshot(animated: false)
         presenter?.viewLoaded()
     }
@@ -167,6 +170,27 @@ final class TodoListViewController: UIViewController {
         let tap = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
         tap.cancelsTouchesInView = false
         view.addGestureRecognizer(tap)
+    }
+    
+    private func subscribeOnKeyboardState() {
+        NotificationCenter.default
+            .publisher(for: UIResponder.keyboardWillShowNotification)
+            .sink { [weak self] notification in
+                guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else { return }
+                let keyboardHeight = keyboardFrame.cgRectValue.height
+                
+                self?.tableView.contentInset.bottom = keyboardHeight + 10
+                self?.tableView.verticalScrollIndicatorInsets.bottom = keyboardHeight + 10
+            }
+            .store(in: &cancellables)
+        
+        NotificationCenter.default
+            .publisher(for: UIResponder.keyboardWillHideNotification)
+            .sink { [weak self] notification in
+                self?.tableView.contentInset.bottom = 49
+                self?.tableView.verticalScrollIndicatorInsets.bottom = 49
+            }
+            .store(in: &cancellables)
     }
     
     private func updateUI() {
