@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Микрофон</string>
+	<string>Для голосового ввода необходим доступ к микрофону</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Голосовой ввод</string>
+	<string>Для голосового ввода неободимо разрешение на распознование речи</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
