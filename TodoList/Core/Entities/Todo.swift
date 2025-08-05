@@ -18,3 +18,17 @@ struct Todo {
     /// Дата создания задачи.
     let date: Date
 }
+
+/// Протокол создания модели задачи.
+protocol TodoBuilderProtocol {
+    
+    /// Заголовок задачи.
+    var title: String { get set }
+    
+    /// Описание задачи.
+    var task: String { get set }
+    
+    /// Создает модель задачи на основе установленных параметров.
+    /// - Returns: Созданная модель задачи или nil в случае невалидных данных.
+    func build() -> Todo?
+}

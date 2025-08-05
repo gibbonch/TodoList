@@ -11,7 +11,7 @@ final class TodoEditorAssembly {
         let interactor = TodoEditorInteractor(
             localRepository: repository,
             caretaker: caretaker,
-            originator: originator
+            builder: originator
         )
         
         viewController.presenter = presenter
@@ -31,7 +31,7 @@ final class TodoEditorAssembly {
         let interactor = TodoEditorInteractor(
             localRepository: repository,
             caretaker: caretaker,
-            originator: originator
+            builder: originator
         )
         
         viewController.presenter = presenter
@@ -42,4 +42,3 @@ final class TodoEditorAssembly {
         return viewController
     }
 }
-

@@ -13,7 +13,7 @@ final class TodoEditorViewController: UIViewController {
     private let taskSubject: PassthroughSubject<String, Never> = .init()
     private var cancellables: Set<AnyCancellable> = []
     
-    var isEditButtonVisible: Bool = false
+    private var isEditButtonVisible: Bool = false
     
     private lazy var contentView: UIView = {
         let view = UIView()
@@ -86,44 +86,39 @@ final class TodoEditorViewController: UIViewController {
         return button
     }()
     
-    private lazy var nextButton: UIBarButtonItem = {
-        let image = UIImage.nextAsset
-            .scaled(size: CGSize(width: 24, height: 24))
+    private lazy var redoButton: UIBarButtonItem = {
+        let image = UIImage.redoAsset
+            .scaled(size: CGSize(width: 20, height: 20))
             .withRenderingMode(.alwaysTemplate)
         let button = UIBarButtonItem(
             image: image,
             style: .plain,
             target: self,
-            action: #selector(nextButtonTapped)
+            action: #selector(redoButtonTapped)
         )
         return button
     }()
     
-    private lazy var previousButton: UIBarButtonItem = {
-        let image = UIImage.previousAsset
-            .scaled(size: CGSize(width: 24, height: 24))
+    private lazy var undoButton: UIBarButtonItem = {
+        let image = UIImage.undoAsset
+            .scaled(size: CGSize(width: 20, height: 20))
             .withRenderingMode(.alwaysTemplate)
         let button = UIBarButtonItem(
             image: image,
             style: .plain,
             target: self,
-            action: #selector(previousButtonTapped)
+            action: #selector(undoButtonTapped)
         )
         return button
     }()
     
     // MARK: - Lifecycle
     
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupView()
         setupNavigationBar()
         setupConstraints()
-        setupKeyboardObservers()
         setupBindings()
         presenter?.viewLoaded()
     }
@@ -137,7 +132,6 @@ final class TodoEditorViewController: UIViewController {
     
     private func setupView() {
         view.backgroundColor = .blackAsset
-        
         contentView.addSubview(titleTextField)
         contentView.addSubview(dateLabel)
         contentView.addSubview(taskTextView)
@@ -183,22 +177,6 @@ final class TodoEditorViewController: UIViewController {
         ])
     }
     
-    private func setupKeyboardObservers() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(keyboardWillShow),
-            name: UIResponder.keyboardWillShowNotification,
-            object: nil
-        )
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(keyboardWillHide),
-            name: UIResponder.keyboardWillHideNotification,
-            object: nil
-        )
-    }
-    
     private func setupBindings() {
         titleSubject
             .debounce(for: 0.1, scheduler: DispatchQueue.main)
@@ -213,6 +191,25 @@ final class TodoEditorViewController: UIViewController {
                 presenter?.taskChanged(task)
             }
             .store(in: &cancellables)
+        
+        NotificationCenter.default
+            .publisher(for: UIResponder.keyboardWillShowNotification)
+            .sink { [weak self] notification in
+                guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else { return }
+                let keyboardHeight = keyboardFrame.cgRectValue.height
+                
+                self?.scrollView.contentInset.bottom = keyboardHeight + 10
+                self?.scrollView.verticalScrollIndicatorInsets.bottom = keyboardHeight + 10
+            }
+            .store(in: &cancellables)
+        
+        NotificationCenter.default
+            .publisher(for: UIResponder.keyboardWillHideNotification)
+            .sink { [weak self] notification in
+                self?.scrollView.contentInset.bottom = 10
+                self?.scrollView.verticalScrollIndicatorInsets.bottom = 10
+            }
+            .store(in: &cancellables)
     }
     
     private func showDoneButton() {
@@ -224,6 +221,23 @@ final class TodoEditorViewController: UIViewController {
         }
     }
     
+    private func updateUI(with newState: TodoEditorViewState) {
+        titleTextField.text = newState.title
+        dateLabel.text = newState.date
+        taskTextView.text = newState.task
+        taskPlaceholderLabel.isHidden = !newState.task.isEmpty
+        
+        if newState.historyStatus.isEmpty {
+            let items = isEditButtonVisible ? [doneButton] : []
+            navigationItem.setRightBarButtonItems(items, animated: true)
+        } else {
+            undoButton.isEnabled = newState.historyStatus.isUndoAvailable
+            redoButton.isEnabled = newState.historyStatus.isRedoAvailable
+            let items = isEditButtonVisible ? [doneButton, redoButton, undoButton] : [redoButton, undoButton]
+            navigationItem.setRightBarButtonItems(items, animated: true)
+        }
+    }
+    
     @objc private func doneButtonTapped() {
         view.endEditing(true)
         var items = navigationItem.rightBarButtonItems ?? []
@@ -232,25 +246,12 @@ final class TodoEditorViewController: UIViewController {
         isEditButtonVisible = false
     }
     
-    @objc private func nextButtonTapped() {
-        presenter?.nextTapped()
+    @objc private func redoButtonTapped() {
+        presenter?.redoTapped()
     }
     
-    @objc private func previousButtonTapped() {
-        presenter?.previousTapped()
-    }
-    
-    @objc private func keyboardWillShow(notification: NSNotification) {
-        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else { return }
-        let keyboardHeight = keyboardFrame.cgRectValue.height
-        
-        scrollView.contentInset.bottom = keyboardHeight + 10
-        scrollView.verticalScrollIndicatorInsets.bottom = keyboardHeight + 10
-    }
-    
-    @objc private func keyboardWillHide(notification: NSNotification) {
-        scrollView.contentInset.bottom = 10
-        scrollView.verticalScrollIndicatorInsets.bottom = 10
+    @objc private func undoButtonTapped() {
+        presenter?.undoTapped()
     }
 }
 
@@ -260,22 +261,7 @@ extension TodoEditorViewController: TodoEditorViewProtocol {
     
     func updateState(with newState: TodoEditorViewState) {
         DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            
-            titleTextField.text = newState.title
-            dateLabel.text = newState.date
-            taskTextView.text = newState.task
-            taskPlaceholderLabel.isHidden = !newState.task.isEmpty
-            
-            if newState.historyStatus.isEmpty {
-                let items = isEditButtonVisible ? [doneButton] : []
-                navigationItem.setRightBarButtonItems(items, animated: true)
-            } else {
-                previousButton.isEnabled = newState.historyStatus.hasPrevious
-                nextButton.isEnabled = newState.historyStatus.hasNext
-                let items = isEditButtonVisible ? [doneButton, nextButton, previousButton] : [nextButton, previousButton]
-                navigationItem.setRightBarButtonItems(items, animated: true)
-            }
+            self?.updateUI(with: newState)
         }
     }
 }

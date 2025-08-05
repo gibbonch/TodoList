@@ -1,7 +1,17 @@
 import Foundation
-import Combine
 
-final class TodoOriginator {
+/// Протокол для объекта, создающего снимки состояния.
+protocol TodoOriginatorProtocol {
+    
+    /// Текущий снимок состояния.
+    var memento: TodoMemento { get }
+    
+    /// Восстанавливает состояние из снимка.
+    /// - Parameter memento: Снимок состояния для восстановления.
+    func restore(from memento: TodoMemento)
+}
+
+final class TodoOriginator: TodoOriginatorProtocol, TodoBuilderProtocol {
     
     // MARK: - Internal Properties
     
@@ -15,17 +25,17 @@ final class TodoOriginator {
         set { memento.task = newValue }
     }
     
-    var isValid: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !task.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-    
     private(set) var memento: TodoMemento
     
     // MARK: - Private Properties
     
     private var id: UUID
     private var isCompleted: Bool?
+    
+    private var isValid: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !task.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
     
     // MARK: - Lifecycle
     

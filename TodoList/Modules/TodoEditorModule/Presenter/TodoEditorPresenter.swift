@@ -67,12 +67,12 @@ extension TodoEditorPresenter: TodoEditorPresenterProtocol {
         interactor?.saveTask()
     }
     
-    func previousTapped() {
-        interactor?.moveToPreviousSnapshot()
+    func undoTapped() {
+        interactor?.undoLastChange()
     }
     
-    func nextTapped() {
-        interactor?.moveToNextSnapshot()
+    func redoTapped() {
+        interactor?.redoLastChange()
     }
 }
 

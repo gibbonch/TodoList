@@ -9,19 +9,19 @@ final class TodoEditorInteractor: TodoEditorInteractorInput {
     // MARK: - Private Properties
     
     private let localRepository: LocalTodoRepositoryProtocol
-    private let caretaker: TodoCaretaker
-    private let originator: TodoOriginator
+    private let caretaker: TodoCaretakerProtocol
+    private var builder: TodoBuilderProtocol
     
     private var cancellables: Set<AnyCancellable> = []
     
     // MARK: - Lifecycle
     
     init(localRepository: LocalTodoRepositoryProtocol,
-         caretaker: TodoCaretaker,
-         originator: TodoOriginator) {
+         caretaker: TodoCaretakerProtocol,
+         builder: TodoBuilderProtocol) {
         self.localRepository = localRepository
         self.caretaker = caretaker
-        self.originator = originator
+        self.builder = builder
         subscribeOnHistoryStatus()
         caretaker.backup()
     }
@@ -29,17 +29,17 @@ final class TodoEditorInteractor: TodoEditorInteractorInput {
     // MARK: - Internal Methods
     
     func updateTitle(_ title: String) {
-        originator.title = title
+        builder.title = title
         caretaker.backup()
     }
     
     func updateTask(_ task: String) {
-        originator.task = task
+        builder.task = task
         caretaker.backup()
     }
     
     func saveTask() {
-        guard let todo = originator.build() else { return }
+        guard let todo = builder.build() else { return }
         
         localRepository.fetchTodo(by: todo.id) { [weak self] result in
             guard let self else { return }
@@ -52,20 +52,20 @@ final class TodoEditorInteractor: TodoEditorInteractorInput {
         }
     }
     
-    func moveToPreviousSnapshot() {
-        caretaker.previous()
-        output?.todoChanged(title: originator.title, task: originator.task)
+    func undoLastChange() {
+        caretaker.undo()
+        output?.todoChanged(title: builder.title, task: builder.task)
     }
     
-    func moveToNextSnapshot() {
-        caretaker.next()
-        output?.todoChanged(title: originator.title, task: originator.task)
+    func redoLastChange() {
+        caretaker.redo()
+        output?.todoChanged(title: builder.title, task: builder.task)
     }
     
     // MARK: - Private Methods
     
     private func subscribeOnHistoryStatus() {
-        caretaker.$status.sink { [weak self] status in
+        caretaker.status.sink { [weak self] status in
             self?.output?.historyStatusChanged(status)
         }.store(in: &cancellables)
     }
