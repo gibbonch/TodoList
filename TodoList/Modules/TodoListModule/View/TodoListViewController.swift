@@ -1,5 +1,7 @@
 import UIKit
 import Combine
+import Speech
+import AVFoundation
 
 final class TodoListViewController: UIViewController {
     
@@ -12,6 +14,8 @@ final class TodoListViewController: UIViewController {
     private var currentState = TodoListViewState()
     private var cancellables: Set<AnyCancellable> = []
     
+    private let speechService = SpeechRecognizerService()
+
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
         tableView.delegate = self
@@ -84,6 +88,19 @@ final class TodoListViewController: UIViewController {
             clearButton.tintColor = .lightGrayAsset
         }
         
+        if let rightView = searchTextField.rightView {
+            rightView.tintColor = .lightGrayAsset
+        }
+        
+        let micImage = UIImage.micAsset
+            .scaled(size: .init(width: 15, height: 22))
+            .withRenderingMode(.alwaysTemplate)
+        searchController.searchBar.setImage(micImage, for: .bookmark, state: .normal)
+        searchController.searchBar.showsBookmarkButton = true
+        
+        searchController.searchBar.delegate = self
+        searchController.searchBar.searchTextField.delegate = self
+        
         return searchController
     }()
     
@@ -119,14 +136,23 @@ final class TodoListViewController: UIViewController {
         setupConstraints()
         setupGestures()
         subscribeOnKeyboardState()
+        speechService.delegate = self
         applySnapshot(animated: false)
         presenter?.viewLoaded()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        speechService.stopRecording()
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         searchController.searchBar.searchTextField.textColor = .whiteAsset
         searchController.searchBar.searchTextField.backgroundColor = .grayAsset
+        if let rightView = searchController.searchBar.searchTextField.rightView {
+            rightView.tintColor = .lightGrayAsset
+        }
     }
     
     // MARK: - Private Methods
@@ -345,13 +371,58 @@ extension TodoListViewController: UITableViewDelegate {
 extension TodoListViewController: UISearchBarDelegate {
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        presenter?.searchTextChanged(searchBar.text ?? "")
+        presenter?.searchTextChanged(searchText)
     }
     
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         presenter?.searchTextChanged("")
     }
+    
+    // MARK: Voice Input
+    
+    func searchBarBookmarkButtonClicked(_ searchBar: UISearchBar) {
+        #if !targetEnvironment(simulator)
+        searchController.searchBar.searchTextField.resignFirstResponder()
+        speechService.toggleRecording()
+        #endif
+    }
+    
+    private func updateMicButton(isListening: Bool) {
+        let image = isListening ? UIImage.clearAsset : UIImage.micAsset
+        let scaled = image.scaled(size: .init(width: 15, height: isListening ? 15 : 22))
+        let tinted = scaled.withRenderingMode(.alwaysTemplate)
+        
+        searchController.searchBar.setImage(tinted, for: .bookmark, state: .normal)
+    }
 }
+
+// MARK: - UITextFieldDelegate
+
+extension TodoListViewController: UITextFieldDelegate {
+    
+    func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
+        return !speechService.isRecording
+    }
+}
+
+// MARK: - SpeechRecognizerServiceDelegate
+
+extension TodoListViewController: SpeechRecognizerServiceDelegate {
+    
+    func speechRecognizerDidReceive(transcription: String) {
+        searchController.searchBar.searchTextField.text = transcription
+        searchBar(searchController.searchBar, textDidChange: transcription)
+    }
+    
+    func speechRecognizerDidStartListening() {
+        updateMicButton(isListening: true)
+    }
+    
+    func speechRecognizerDidStopListening() {
+        updateMicButton(isListening: false)
+    }
+}
+
 
 // MARK: - Section
 
