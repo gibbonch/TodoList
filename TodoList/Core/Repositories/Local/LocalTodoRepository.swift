@@ -14,26 +14,29 @@ final class LocalTodoRepository: NSObject {
     private let contextProvider: ContextProvider
     private let _fetchedResults = PassthroughSubject<[Todo], Never>()
     private var fetchedResultsController: NSFetchedResultsController<TodoEntity>?
+    private var cancellables: Set<AnyCancellable> = []
     
     // MARK: - Lifecycle
     
     init(contextProvider: ContextProvider = CoreDataStack.shared) {
         self.contextProvider = contextProvider
         super.init()
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(backgroundContextDidSave(_:)),
-            name: .NSManagedObjectContextDidSave,
-            object: nil
-        )
-    }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
+        subscribeOnContextSave()
     }
     
     // MARK: - Private Methods
+    
+    private func subscribeOnContextSave() {
+        NotificationCenter.default
+            .publisher(for: .NSManagedObjectContextDidSave)
+            .sink { [weak self] notification in
+                guard let self,
+                      let context = notification.object as? NSManagedObjectContext,
+                      context != contextProvider.viewContext else { return }
+                contextProvider.viewContext.mergeChanges(fromContextDidSave: notification)
+            }
+            .store(in: &cancellables)
+    }
     
     private func setupFetchedResultsController(with query: String? = nil) {
         let context = contextProvider.viewContext
@@ -69,13 +72,6 @@ final class LocalTodoRepository: NSObject {
         guard let fetchedObjects = fetchedResultsController?.fetchedObjects else { return }
         let todos = fetchedObjects.map { $0.mapToDomain() }
         _fetchedResults.send(todos)
-    }
-    
-    @objc private func backgroundContextDidSave(_ notification: Notification) {
-        guard let context = notification.object as? NSManagedObjectContext,
-              context != contextProvider.viewContext else { return }
-        
-        contextProvider.viewContext.mergeChanges(fromContextDidSave: notification)
     }
 }
 
