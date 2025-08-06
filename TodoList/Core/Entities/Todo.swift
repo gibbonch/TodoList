@@ -19,6 +19,13 @@ struct Todo {
     let date: Date
 }
 
+extension Todo: Equatable {
+    
+    public static func == (lhs: Todo, rhs: Todo) -> Bool {
+        lhs.id == rhs.id && lhs.title == rhs.title && lhs.task == rhs.task && lhs.isCompleted == rhs.isCompleted && lhs.date == rhs.date
+    }
+}
+
 /// Протокол создания модели задачи.
 protocol TodoBuilderProtocol {
     
