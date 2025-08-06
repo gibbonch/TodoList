@@ -136,7 +136,6 @@ final class TodoEditorViewController: UIViewController {
         let safeAreaTop = view.safeAreaInsets.top
         let safeAreaBottom = view.safeAreaInsets.bottom
         
-        // Рассчитываем высоты на основе шрифтов
         let titleFieldHeight = titleTextField.font?.lineHeight ?? 44
         let dateLabelHeight = dateLabel.font?.lineHeight ?? 16
         
