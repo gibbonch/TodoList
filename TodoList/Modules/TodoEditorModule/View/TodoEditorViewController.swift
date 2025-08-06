@@ -133,14 +133,26 @@ final class TodoEditorViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
-        let bottomPadding: CGFloat = 20 + view.safeAreaInsets.bottom
-        let topPadding: CGFloat = 8 + view.safeAreaInsets.top
+        let safeAreaTop = view.safeAreaInsets.top
+        let safeAreaBottom = view.safeAreaInsets.bottom
         
-        let availableHeight = view.bounds.height - topPadding - titleTextField.frame.height - 8 - dateLabel.frame.height - 16 - bottomPadding
-        taskTextViewHeightConstraint?.constant = max(availableHeight, 100)
+        // Рассчитываем высоты на основе шрифтов
+        let titleFieldHeight = titleTextField.font?.lineHeight ?? 44
+        let dateLabelHeight = dateLabel.font?.lineHeight ?? 16
+        
+        let topPadding: CGFloat = 8
+        let titleDateSpacing: CGFloat = 8
+        let dateTaskSpacing: CGFloat = 16
+        let bottomPadding: CGFloat = 20
+        
+        let totalVerticalSpacing = safeAreaTop + topPadding + titleFieldHeight + titleDateSpacing + dateLabelHeight + dateTaskSpacing + bottomPadding + safeAreaBottom
+        
+        let availableHeight = view.bounds.height - totalVerticalSpacing
+        let minimumHeight: CGFloat = 200
+        
+        taskTextViewHeightConstraint?.constant = max(availableHeight, minimumHeight)
     }
 
-    
     // MARK: - Private Methods
     
     private func setupView() {
@@ -185,7 +197,6 @@ final class TodoEditorViewController: UIViewController {
             taskTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             taskTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             taskTextView.topAnchor.constraint(equalTo: dateLabel.bottomAnchor, constant: 16),
-            taskTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 800),
             taskTextView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
             
             taskPlaceholderLabel.leadingAnchor.constraint(equalTo: taskTextView.leadingAnchor, constant: 1),

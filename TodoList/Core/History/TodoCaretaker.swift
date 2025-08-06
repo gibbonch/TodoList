@@ -29,13 +29,13 @@ final class TodoCaretaker: TodoCaretakerProtocol {
     
     private var mementos: [TodoMemento] = []
     private var pointer: Int = 0
-    private let originator: TodoOriginator
+    private let originator: TodoOriginatorProtocol
     
     private let _status = CurrentValueSubject<HistoryStatus, Never>(HistoryStatus())
     
     // MARK: - Lifecycle
     
-    init(originator: TodoOriginator) {
+    init(originator: TodoOriginatorProtocol) {
         self.originator = originator
     }
     
@@ -49,9 +49,12 @@ final class TodoCaretaker: TodoCaretakerProtocol {
         mementos.append(originator.memento)
         pointer = mementos.count - 1
         
-        _status.value.isEmpty = mementos.count <= 1
-        _status.value.isRedoAvailable = false
-        _status.value.isUndoAvailable = pointer > 0
+        let historyStatus = HistoryStatus(
+            isEmpty: mementos.count <= 1,
+            isRedoAvailable: false,
+            isUndoAvailable: pointer > 0
+        )
+        _status.value = historyStatus
     }
     
     func undo() {
@@ -59,8 +62,12 @@ final class TodoCaretaker: TodoCaretakerProtocol {
         pointer -= 1
         originator.restore(from: mementos[pointer])
         
-        _status.value.isUndoAvailable = pointer > 0
-        _status.value.isRedoAvailable = pointer < mementos.count - 1
+        let historyStatus = HistoryStatus(
+            isEmpty: false,
+            isRedoAvailable: pointer < mementos.count - 1,
+            isUndoAvailable: pointer > 0
+        )
+        _status.value = historyStatus
     }
     
     func redo() {
@@ -68,7 +75,11 @@ final class TodoCaretaker: TodoCaretakerProtocol {
         pointer += 1
         originator.restore(from: mementos[pointer])
         
-        _status.value.isUndoAvailable = pointer > 0
-        _status.value.isRedoAvailable = pointer < mementos.count - 1
+        let historyStatus = HistoryStatus(
+            isEmpty: false,
+            isRedoAvailable: pointer < mementos.count - 1,
+            isUndoAvailable: pointer > 0
+        )
+        _status.value = historyStatus
     }
 }

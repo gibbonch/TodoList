@@ -43,17 +43,6 @@ final class CoreDataStack: ContextProvider {
     
     // MARK: - Internal Methods
     
-    func save(context: NSManagedObjectContext) throws {
-        guard context.hasChanges else { return }
-        
-        do {
-            try context.save()
-        } catch {
-            context.rollback()
-            throw error
-        }
-    }
-    
     func performBackgroundTask(_ block: @escaping (NSManagedObjectContext) -> Void) {
         persistentContainer.performBackgroundTask(block)
     }
